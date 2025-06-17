@@ -18,7 +18,11 @@ export class ElasticsearchService {
         body: film,
       });
 
-      return result;
+      return {
+        _index: 'films',
+        _id: film.id,
+        result: 'created',
+      };
     } catch (error) {
       throw new Error(`Indexing failed: ${error.message}`);
     }

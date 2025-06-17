@@ -1,33 +1,29 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ElasticsearchService } from '../elasticsearch.service';
-import { Client } from '@elastic/elasticsearch';
 
+// Mock Client to simulate Elasticsearch interactions
 class MockElasticsearchClient {
-  index = vi.fn();
-  search = vi.fn();
-  delete = vi.fn();
-  update = vi.fn();
+  private mockIndex: any;
+  constructor(mockIndex = {}) {
+    this.mockIndex = mockIndex;
+  }
+
+  index = vi.fn().mockResolvedValue(this.mockIndex);
 }
 
 describe('ElasticsearchService', () => {
   let service: ElasticsearchService;
   let mockElasticsearchClient: MockElasticsearchClient;
 
-  beforeEach(async () => {
-    mockElasticsearchClient = new MockElasticsearchClient();
+  beforeEach(() => {
+    const mockIndexResult = {
+      _index: 'films',
+      _id: '1',
+      result: 'created',
+    };
 
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ElasticsearchService,
-        {
-          provide: Client,
-          useValue: mockElasticsearchClient,
-        },
-      ],
-    }).compile();
-
-    service = module.get<ElasticsearchService>(ElasticsearchService);
+    mockElasticsearchClient = new MockElasticsearchClient(mockIndexResult);
+    service = new ElasticsearchService(mockElasticsearchClient as any);
   });
 
   describe('indexFilm', () => {
@@ -39,12 +35,6 @@ describe('ElasticsearchService', () => {
         genres: ['Action'],
         releaseYear: 2023,
       };
-
-      mockElasticsearchClient.index.mockResolvedValue({
-        _index: 'films',
-        _id: '1',
-        result: 'created',
-      });
 
       const result = await service.indexFilm(mockFilm);
 
@@ -67,10 +57,12 @@ describe('ElasticsearchService', () => {
         description: 'A film that will cause an error',
       };
 
-      const mockError = new Error('Indexing failed');
-      mockElasticsearchClient.index.mockRejectedValue(mockError);
+      const errorMockClient = new MockElasticsearchClient();
+      (errorMockClient.index as any).mockRejectedValue(new Error('Indexing failed'));
+      
+      const errorService = new ElasticsearchService(errorMockClient as any);
 
-      await expect(service.indexFilm(mockFilm)).rejects.toThrow('Indexing failed');
+      await expect(errorService.indexFilm(mockFilm)).rejects.toThrow('Indexing failed');
     });
 
     it('should throw an error if film is incomplete', async () => {
@@ -89,12 +81,6 @@ describe('ElasticsearchService', () => {
         genres: ['Epic', 'Drama', 'Action'],
         releaseYear: 2023,
       };
-
-      mockElasticsearchClient.index.mockResolvedValue({
-        _index: 'films',
-        _id: '4',
-        result: 'created',
-      });
 
       const result = await service.indexFilm(largeMockFilm);
 

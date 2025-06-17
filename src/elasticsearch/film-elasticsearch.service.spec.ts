@@ -42,10 +42,9 @@ describe('FilmElasticsearchService', () => {
 
   it('should return false when film is not found', async () => {
     const filmId = 'nonexistent-film';
-    const notFoundError = {
-      meta: { 
-        statusCode: 404 
-      }
+    const notFoundError = new Error('Not Found');
+    (notFoundError as any).meta = { 
+      statusCode: 404 
     };
     mockElasticsearchService.delete.mockRejectedValue(notFoundError);
 

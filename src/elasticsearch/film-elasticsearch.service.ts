@@ -7,6 +7,7 @@ export class FilmElasticsearchServiceImpl implements FilmElasticsearchService {
   constructor(private readonly elasticsearchService: ElasticsearchService) {}
 
   async deleteFilm(id: string): Promise<boolean> {
+    console.log('Attempting to delete film with ID:', id);
     if (!id) {
       throw new Error('Film ID is required');
     }
@@ -17,8 +18,10 @@ export class FilmElasticsearchServiceImpl implements FilmElasticsearchService {
         id: id
       });
 
+      console.log('Delete result:', result);
       return result.result === 'deleted';
     } catch (error) {
+      console.error('Delete error:', error);
       if (error.meta && error.meta.statusCode === 404) {
         return false; // Film not found is not considered an error
       }

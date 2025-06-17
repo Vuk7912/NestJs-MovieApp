@@ -1,20 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ElasticsearchService } from '../elasticsearch.service';
 import { ElasticsearchModule } from '../elasticsearch.module';
 import { Client } from '@elastic/elasticsearch';
 
 describe('ElasticsearchService', () => {
   let service: ElasticsearchService;
-  let mockElasticsearchClient: jest.Mocked<Client>;
+  let mockElasticsearchClient: {
+    index: ReturnType<typeof vi.fn>,
+    search: ReturnType<typeof vi.fn>,
+    delete: ReturnType<typeof vi.fn>,
+    update: ReturnType<typeof vi.fn>
+  };
 
   beforeEach(async () => {
     // Create a mock Elasticsearch client
     mockElasticsearchClient = {
-      index: jest.fn(),
-      search: jest.fn(),
-      delete: jest.fn(),
-      update: jest.fn(),
-    } as any;
+      index: vi.fn(),
+      search: vi.fn(),
+      delete: vi.fn(),
+      update: vi.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [ElasticsearchModule],
@@ -44,7 +50,7 @@ describe('ElasticsearchService', () => {
         _index: 'films',
         _id: '1',
         result: 'created',
-      } as any);
+      });
 
       const result = await service.indexFilm(mockFilm);
 
@@ -94,7 +100,7 @@ describe('ElasticsearchService', () => {
         _index: 'films',
         _id: '4',
         result: 'created',
-      } as any);
+      });
 
       const result = await service.indexFilm(largeMockFilm);
 

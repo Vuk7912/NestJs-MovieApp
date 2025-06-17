@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach } from 'vitest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FilmElasticsearchServiceImpl } from './film-elasticsearch.service';
@@ -5,12 +6,12 @@ import { FilmElasticsearchServiceImpl } from './film-elasticsearch.service';
 describe('FilmElasticsearchService', () => {
   let service: FilmElasticsearchServiceImpl;
   let mockElasticsearchService: {
-    delete: jest.Mock;
+    delete: vi.Mock;
   };
 
   beforeEach(async () => {
     mockElasticsearchService = {
-      delete: jest.fn()
+      delete: vi.fn()
     };
 
     const module: TestingModule = await Test.createTestingModule({

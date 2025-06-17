@@ -1,29 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ElasticsearchService } from '../elasticsearch.service';
-import { ElasticsearchModule } from '../elasticsearch.module';
 import { Client } from '@elastic/elasticsearch';
+
+class MockElasticsearchClient {
+  index = vi.fn();
+  search = vi.fn();
+  delete = vi.fn();
+  update = vi.fn();
+}
 
 describe('ElasticsearchService', () => {
   let service: ElasticsearchService;
-  let mockElasticsearchClient: {
-    index: ReturnType<typeof vi.fn>,
-    search: ReturnType<typeof vi.fn>,
-    delete: ReturnType<typeof vi.fn>,
-    update: ReturnType<typeof vi.fn>
-  };
+  let mockElasticsearchClient: MockElasticsearchClient;
 
   beforeEach(async () => {
-    // Create a mock Elasticsearch client
-    mockElasticsearchClient = {
-      index: vi.fn(),
-      search: vi.fn(),
-      delete: vi.fn(),
-      update: vi.fn(),
-    };
+    mockElasticsearchClient = new MockElasticsearchClient();
 
     const module: TestingModule = await Test.createTestingModule({
-      imports: [ElasticsearchModule],
       providers: [
         ElasticsearchService,
         {

@@ -5,9 +5,7 @@ import { FilmElasticsearchServiceImpl } from './film-elasticsearch.service';
 
 describe('FilmElasticsearchService', () => {
   let service: FilmElasticsearchServiceImpl;
-  let mockElasticsearchService: {
-    delete: vi.Mock;
-  };
+  let mockElasticsearchService: Partial<ElasticsearchService>;
 
   beforeEach(async () => {
     mockElasticsearchService = {
@@ -29,7 +27,7 @@ describe('FilmElasticsearchService', () => {
 
   it('should delete a film successfully', async () => {
     const filmId = 'film123';
-    mockElasticsearchService.delete.mockResolvedValue({ result: 'deleted' });
+    (mockElasticsearchService.delete as vi.Mock).mockResolvedValue({ result: 'deleted' });
 
     const result = await service.deleteFilm(filmId);
 
@@ -46,7 +44,7 @@ describe('FilmElasticsearchService', () => {
     (notFoundError as any).meta = { 
       statusCode: 404 
     };
-    mockElasticsearchService.delete.mockRejectedValue(notFoundError);
+    (mockElasticsearchService.delete as vi.Mock).mockRejectedValue(notFoundError);
 
     const result = await service.deleteFilm(filmId);
 
@@ -60,7 +58,7 @@ describe('FilmElasticsearchService', () => {
   it('should throw an error for other Elasticsearch errors', async () => {
     const filmId = 'film123';
     const serverError = new Error('Server error');
-    mockElasticsearchService.delete.mockRejectedValue(serverError);
+    (mockElasticsearchService.delete as vi.Mock).mockRejectedValue(serverError);
 
     await expect(service.deleteFilm(filmId)).rejects.toThrow('Server error');
   });

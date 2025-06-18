@@ -12,21 +12,19 @@ describe('MovieService', () => {
     searchMovies: jest.fn(),
   };
 
-  const mockMovieModel = {
-    find: jest.fn(),
-  };
+  const mockMovieModel = {};
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MovieService,
         {
-          provide: ElasticsearchService,
-          useValue: mockElasticsearchService,
-        },
-        {
           provide: getModelToken(Movie.name),
           useValue: mockMovieModel,
+        },
+        {
+          provide: ElasticsearchService,
+          useValue: mockElasticsearchService,
         },
       ],
     }).compile();
@@ -36,40 +34,46 @@ describe('MovieService', () => {
   });
 
   describe('searchMovies', () => {
-    it('should return movies matching the query', async () => {
-      const mockSearchResult = [
+    it('should call elasticsearch service with correct parameters', async () => {
+      const mockSearchResults = [
         { id: '1', title: 'Test Movie', genre: 'Action' },
-        { id: '2', title: 'Another Test Movie', genre: 'Action' }
+        { id: '2', title: 'Another Movie', genre: 'Action' },
       ];
 
-      jest.spyOn(elasticsearchService, 'searchMovies').mockResolvedValue(mockSearchResult);
+      jest
+        .spyOn(elasticsearchService, 'searchMovies')
+        .mockResolvedValue(mockSearchResults);
 
       const result = await movieService.searchMovies('test', 'Action');
-      
-      expect(result).toEqual(mockSearchResult);
+
       expect(elasticsearchService.searchMovies).toHaveBeenCalledWith('test', 'Action');
+      expect(result).toEqual(mockSearchResults);
     });
 
     it('should handle empty genre gracefully', async () => {
-      const mockSearchResult = [
-        { id: '1', title: 'Test Movie', genre: 'Action' }
+      const mockSearchResults = [
+        { id: '1', title: 'Test Movie', genre: 'Action' },
       ];
 
-      jest.spyOn(elasticsearchService, 'searchMovies').mockResolvedValue(mockSearchResult);
+      jest
+        .spyOn(elasticsearchService, 'searchMovies')
+        .mockResolvedValue(mockSearchResults);
 
       const result = await movieService.searchMovies('test', '');
-      
-      expect(result).toEqual(mockSearchResult);
+
       expect(elasticsearchService.searchMovies).toHaveBeenCalledWith('test', '');
+      expect(result).toEqual(mockSearchResults);
     });
 
-    it('should return an empty array when no results found', async () => {
-      jest.spyOn(elasticsearchService, 'searchMovies').mockResolvedValue([]);
+    it('should return empty array if no results found', async () => {
+      jest
+        .spyOn(elasticsearchService, 'searchMovies')
+        .mockResolvedValue([]);
 
-      const result = await movieService.searchMovies('nonexistent', 'Fantasy');
-      
+      const result = await movieService.searchMovies('nonexistent', 'Sci-Fi');
+
+      expect(elasticsearchService.searchMovies).toHaveBeenCalledWith('nonexistent', 'Sci-Fi');
       expect(result).toEqual([]);
-      expect(elasticsearchService.searchMovies).toHaveBeenCalledWith('nonexistent', 'Fantasy');
     });
   });
 });

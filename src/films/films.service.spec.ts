@@ -1,7 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FilmsService } from './films.service';
-import { expect } from 'vitest';
 
 describe('FilmsService', () => {
   let filmsService: FilmsService;

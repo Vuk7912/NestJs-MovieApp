@@ -5,22 +5,22 @@ export type MovieDocument = HydratedDocument<Movie>;
 
 @Schema()
 export class Movie {
-  @Prop({ required: true })
+  @Prop({ type: String, required: true })
   _id: string;
 
-  @Prop({ required: true })
+  @Prop({ type: String, required: true })
   title: string;
 
   @Prop({ type: [String], default: [] })
   genre: string[];
 
-  @Prop()
+  @Prop({ type: String })
   description: string;
 
-  @Prop()
+  @Prop({ type: Number })
   year: number;
 
-  @Prop()
+  @Prop({ type: String })
   director: string;
 }
 

@@ -1,67 +1,95 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MovieService } from './movies.service';
-import { ElasticsearchService } from '../elasticsearch/elasticsearch.service';
 import { getModelToken } from '@nestjs/mongoose';
+import { ElasticsearchService } from '../elasticsearch/elasticsearch.service';
 import { Movie } from './schemas/movie.schema';
+import { Model } from 'mongoose';
+import { CreateMovieDto } from './dto/create-movie.dto';
 
 describe('MovieService', () => {
   let movieService: MovieService;
-  let elasticsearchService: ElasticsearchService;
-
-  const mockElasticsearchService = {
-    searchMovies: jest.fn(),
-  };
-
-  const mockMovieModel = {
-    // Add any necessary mock methods if required
-  };
+  let mockMovieModel: jest.Mocked<Model<Movie>>;
+  let mockElasticsearchService: jest.Mocked<ElasticsearchService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MovieService,
         {
-          provide: ElasticsearchService,
-          useValue: mockElasticsearchService,
+          provide: getModelToken(Movie.name),
+          useValue: {
+            findByIdAndUpdate: jest.fn(),
+          },
         },
         {
-          provide: getModelToken(Movie.name),
-          useValue: mockMovieModel,
+          provide: ElasticsearchService,
+          useValue: {
+            updateFilm: jest.fn(),
+          },
         },
       ],
     }).compile();
 
     movieService = module.get<MovieService>(MovieService);
-    elasticsearchService = module.get<ElasticsearchService>(ElasticsearchService);
+    mockMovieModel = module.get(getModelToken(Movie.name));
+    mockElasticsearchService = module.get(ElasticsearchService);
   });
 
-  describe('searchMovies', () => {
-    it('should call elasticsearch service with query and genre', async () => {
-      const mockSearchResult = [{ id: '1', title: 'Test Movie' }];
-      jest.spyOn(elasticsearchService, 'searchMovies').mockResolvedValue(mockSearchResult);
+  describe('updateMovieById', () => {
+    it('should update a movie and sync with Elasticsearch', async () => {
+      // Prepare test data
+      const movieId = '60d5ecb8b3b3a83f2cf5e123';
+      const updateMovieDto: CreateMovieDto = {
+        title: 'Updated Movie Title',
+        genre: 'Updated Genre',
+        description: 'Updated Description',
+      };
 
-      const result = await movieService.searchMovies('test', 'action');
-      
-      expect(elasticsearchService.searchMovies).toHaveBeenCalledWith('test', 'action');
-      expect(result).toEqual(mockSearchResult);
+      const updatedMovie = {
+        _id: movieId,
+        ...updateMovieDto,
+      };
+
+      // Mock implementations
+      mockMovieModel.findByIdAndUpdate.mockResolvedValue(updatedMovie);
+      mockElasticsearchService.updateFilm.mockResolvedValue(true);
+
+      // Execute method
+      const result = await movieService.updateMovieById(movieId, updateMovieDto);
+
+      // Assertions
+      expect(mockMovieModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        movieId,
+        updateMovieDto,
+        { new: true }
+      );
+      expect(mockElasticsearchService.updateFilm).toHaveBeenCalledWith(updatedMovie);
+      expect(result).toEqual(updatedMovie);
     });
 
-    it('should call elasticsearch service with empty genre when no genre is provided', async () => {
-      const mockSearchResult = [{ id: '1', title: 'Test Movie' }];
-      jest.spyOn(elasticsearchService, 'searchMovies').mockResolvedValue(mockSearchResult);
+    it('should return null if movie not found', async () => {
+      // Prepare test data
+      const movieId = '60d5ecb8b3b3a83f2cf5e123';
+      const updateMovieDto: CreateMovieDto = {
+        title: 'Updated Movie Title',
+        genre: 'Updated Genre',
+        description: 'Updated Description',
+      };
 
-      const result = await movieService.searchMovies('test', '');
-      
-      expect(elasticsearchService.searchMovies).toHaveBeenCalledWith('test', '');
-      expect(result).toEqual(mockSearchResult);
-    });
+      // Mock implementations
+      mockMovieModel.findByIdAndUpdate.mockResolvedValue(null);
 
-    it('should return empty array when no results found', async () => {
-      jest.spyOn(elasticsearchService, 'searchMovies').mockResolvedValue([]);
+      // Execute method
+      const result = await movieService.updateMovieById(movieId, updateMovieDto);
 
-      const result = await movieService.searchMovies('nonexistent', '');
-      
-      expect(result).toEqual([]);
+      // Assertions
+      expect(mockMovieModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        movieId,
+        updateMovieDto,
+        { new: true }
+      );
+      expect(mockElasticsearchService.updateFilm).not.toHaveBeenCalled();
+      expect(result).toBeNull();
     });
   });
 });

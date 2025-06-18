@@ -3,23 +3,21 @@ import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FilmsService } from './films.service';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
+class MockElasticsearchService {
+  update = vi.fn();
+}
+
 describe('FilmsService', () => {
   let filmsService: FilmsService;
-  let elasticsearchService: {
-    update: jest.Mock
-  };
+  let elasticsearchService: MockElasticsearchService;
 
   beforeEach(async () => {
-    const mockElasticsearchService = {
-      update: vi.fn()
-    };
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FilmsService,
         {
           provide: ElasticsearchService,
-          useValue: mockElasticsearchService
+          useClass: MockElasticsearchService
         }
       ]
     }).compile();
@@ -34,7 +32,7 @@ describe('FilmsService', () => {
       const updateFilmDto = { title: 'Updated Film Title', year: 2023 };
       const mockUpdateResponse = { body: { result: 'updated' } };
 
-      (elasticsearchService.update as jest.Mock).mockResolvedValue(mockUpdateResponse);
+      elasticsearchService.update.mockResolvedValue(mockUpdateResponse);
 
       const result = await filmsService.updateFilm(mockFilmId, updateFilmDto);
 
@@ -50,7 +48,7 @@ describe('FilmsService', () => {
       const mockFilmId = 'film123';
       const updateFilmDto = { title: 'Updated Film Title' };
 
-      (elasticsearchService.update as jest.Mock).mockRejectedValue(new Error('Update failed'));
+      elasticsearchService.update.mockRejectedValue(new Error('Update failed'));
 
       await expect(filmsService.updateFilm(mockFilmId, updateFilmDto)).rejects.toThrow('Failed to update film: Update failed');
     });
@@ -60,7 +58,7 @@ describe('FilmsService', () => {
       const updateFilmDto = { year: 2023 };
       const mockUpdateResponse = { body: { result: 'updated' } };
 
-      (elasticsearchService.update as jest.Mock).mockResolvedValue(mockUpdateResponse);
+      elasticsearchService.update.mockResolvedValue(mockUpdateResponse);
 
       const result = await filmsService.updateFilm(mockFilmId, updateFilmDto);
 

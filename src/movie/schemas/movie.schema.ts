@@ -5,33 +5,23 @@ export type MovieDocument = HydratedDocument<Movie>;
 
 @Schema()
 export class Movie {
-  @Prop({ required: true })
-  name: string;
+  @Prop({ type: String, required: true })
+  _id: string;
 
-  @Prop()
+  @Prop({ type: String, required: true })
+  title: string;
+
+  @Prop({ type: [String], default: [] })
+  genre: string[];
+
+  @Prop({ type: String })
   description: string;
 
-  @Prop()
-  release_date: string;
+  @Prop({ type: Number })
+  year: number;
 
-  // For the sake of this project, we will assume we only have ticket prices in PKR
-  @Prop()
-  ticket_price: number;
-
-  @Prop()
-  country: string;
-
-  @Prop()
-  genre: string;
-
-  @Prop()
-  photo_uri: string;
-
-  @Prop({ default: [] })
-  ratings: { userId: string; rating: number }[]; // Array of objects to store user ratings
-
-  @Prop({ default: [] })
-  comments: { userId: string; text: string }[]; // Array of objects to store user comments
+  @Prop({ type: String })
+  director: string;
 }
 
 export const MovieSchema = SchemaFactory.createForClass(Movie);

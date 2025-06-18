@@ -5,7 +5,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 describe('FilmsService', () => {
   let filmsService: FilmsService;
-  let elasticsearchService: ElasticsearchService;
+  let elasticsearchService: {
+    update: jest.Mock
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -21,7 +23,7 @@ describe('FilmsService', () => {
     }).compile();
 
     filmsService = module.get<FilmsService>(FilmsService);
-    elasticsearchService = module.get<ElasticsearchService>(ElasticsearchService);
+    elasticsearchService = module.get(ElasticsearchService);
   });
 
   describe('updateFilm', () => {
@@ -30,7 +32,7 @@ describe('FilmsService', () => {
       const updateFilmDto = { title: 'Updated Film Title', year: 2023 };
       const mockUpdateResponse = { body: { result: 'updated' } };
 
-      vi.spyOn(elasticsearchService, 'update').mockResolvedValue(mockUpdateResponse);
+      vi.spyOn(elasticsearchService, 'update').mockResolvedValue(mockUpdateResponse as any);
 
       const result = await filmsService.updateFilm(mockFilmId, updateFilmDto);
 
@@ -56,7 +58,7 @@ describe('FilmsService', () => {
       const updateFilmDto = { year: 2023 };
       const mockUpdateResponse = { body: { result: 'updated' } };
 
-      vi.spyOn(elasticsearchService, 'update').mockResolvedValue(mockUpdateResponse);
+      vi.spyOn(elasticsearchService, 'update').mockResolvedValue(mockUpdateResponse as any);
 
       const result = await filmsService.updateFilm(mockFilmId, updateFilmDto);
 

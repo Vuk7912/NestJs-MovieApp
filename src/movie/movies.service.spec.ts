@@ -3,9 +3,8 @@ import { MovieService } from './movies.service';
 import { ElasticsearchService } from '../elasticsearch/elasticsearch.service';
 import { getModelToken } from '@nestjs/mongoose';
 import { Movie } from './schemas/movie.schema';
-import { Model } from 'mongoose';
 
-describe('MovieService', () => {
+describe('MovieService - searchMovies', () => {
   let movieService: MovieService;
   let elasticsearchService: ElasticsearchService;
 
@@ -13,19 +12,19 @@ describe('MovieService', () => {
     searchMovies: jest.fn(),
   };
 
-  const mockMovieModel = {} as Model<Movie>;
+  const mockMovieModel = {};
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MovieService,
         {
-          provide: getModelToken(Movie.name),
-          useValue: mockMovieModel,
-        },
-        {
           provide: ElasticsearchService,
           useValue: mockElasticsearchService,
+        },
+        {
+          provide: getModelToken(Movie.name),
+          useValue: mockMovieModel,
         },
       ],
     }).compile();
@@ -34,41 +33,43 @@ describe('MovieService', () => {
     elasticsearchService = module.get<ElasticsearchService>(ElasticsearchService);
   });
 
-  describe('searchMovies', () => {
-    it('should call elasticsearch searchMovies with correct parameters', async () => {
-      const mockSearchResult = [{ id: '1', title: 'Test Movie' }];
-      const query = 'test';
-      const genre = 'action';
+  it('should call elasticsearch service with query and genre', async () => {
+    const mockSearchResult = [{ id: '1', title: 'Test Movie' }];
+    jest.spyOn(elasticsearchService, 'searchMovies').mockResolvedValue(mockSearchResult);
 
-      jest.spyOn(elasticsearchService, 'searchMovies').mockResolvedValue(mockSearchResult);
+    const result = await movieService.searchMovies('action', 'thriller');
 
-      const result = await movieService.searchMovies(query, genre);
+    expect(elasticsearchService.searchMovies).toHaveBeenCalledWith('action', 'thriller');
+    expect(result).toEqual(mockSearchResult);
+  });
 
-      expect(elasticsearchService.searchMovies).toHaveBeenCalledWith(query, genre);
-      expect(result).toEqual(mockSearchResult);
-    });
+  it('should call elasticsearch service with empty genre string', async () => {
+    const mockSearchResult = [{ id: '1', title: 'Test Movie' }];
+    jest.spyOn(elasticsearchService, 'searchMovies').mockResolvedValue(mockSearchResult);
 
-    it('should call elasticsearch searchMovies with empty genre when not provided', async () => {
-      const mockSearchResult = [{ id: '1', title: 'Test Movie' }];
-      const query = 'test';
+    const result = await movieService.searchMovies('action', '');
 
-      jest.spyOn(elasticsearchService, 'searchMovies').mockResolvedValue(mockSearchResult);
+    expect(elasticsearchService.searchMovies).toHaveBeenCalledWith('action', '');
+    expect(result).toEqual(mockSearchResult);
+  });
 
-      const result = await movieService.searchMovies(query, '');
+  it('should handle empty query', async () => {
+    const mockSearchResult = [];
+    jest.spyOn(elasticsearchService, 'searchMovies').mockResolvedValue(mockSearchResult);
 
-      expect(elasticsearchService.searchMovies).toHaveBeenCalledWith(query, '');
-      expect(result).toEqual(mockSearchResult);
-    });
+    const result = await movieService.searchMovies('', 'comedy');
 
-    it('should handle empty query and genre', async () => {
-      const mockSearchResult = [];
+    expect(elasticsearchService.searchMovies).toHaveBeenCalledWith('', 'comedy');
+    expect(result).toEqual(mockSearchResult);
+  });
 
-      jest.spyOn(elasticsearchService, 'searchMovies').mockResolvedValue(mockSearchResult);
+  it('should handle no results', async () => {
+    const mockSearchResult = [];
+    jest.spyOn(elasticsearchService, 'searchMovies').mockResolvedValue(mockSearchResult);
 
-      const result = await movieService.searchMovies('', '');
+    const result = await movieService.searchMovies('nonexistent', 'scifi');
 
-      expect(elasticsearchService.searchMovies).toHaveBeenCalledWith('', '');
-      expect(result).toEqual(mockSearchResult);
-    });
+    expect(elasticsearchService.searchMovies).toHaveBeenCalledWith('nonexistent', 'scifi');
+    expect(result).toEqual([]);
   });
 });

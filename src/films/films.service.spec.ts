@@ -10,14 +10,16 @@ describe('FilmsService', () => {
   };
 
   beforeEach(async () => {
+    const mockElasticsearchService = {
+      update: vi.fn()
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FilmsService,
         {
           provide: ElasticsearchService,
-          useValue: {
-            update: vi.fn()
-          }
+          useValue: mockElasticsearchService
         }
       ]
     }).compile();
@@ -32,7 +34,7 @@ describe('FilmsService', () => {
       const updateFilmDto = { title: 'Updated Film Title', year: 2023 };
       const mockUpdateResponse = { body: { result: 'updated' } };
 
-      vi.spyOn(elasticsearchService, 'update').mockResolvedValue(mockUpdateResponse as any);
+      (elasticsearchService.update as jest.Mock).mockResolvedValue(mockUpdateResponse);
 
       const result = await filmsService.updateFilm(mockFilmId, updateFilmDto);
 
@@ -48,7 +50,7 @@ describe('FilmsService', () => {
       const mockFilmId = 'film123';
       const updateFilmDto = { title: 'Updated Film Title' };
 
-      vi.spyOn(elasticsearchService, 'update').mockRejectedValue(new Error('Update failed'));
+      (elasticsearchService.update as jest.Mock).mockRejectedValue(new Error('Update failed'));
 
       await expect(filmsService.updateFilm(mockFilmId, updateFilmDto)).rejects.toThrow('Failed to update film: Update failed');
     });
@@ -58,7 +60,7 @@ describe('FilmsService', () => {
       const updateFilmDto = { year: 2023 };
       const mockUpdateResponse = { body: { result: 'updated' } };
 
-      vi.spyOn(elasticsearchService, 'update').mockResolvedValue(mockUpdateResponse as any);
+      (elasticsearchService.update as jest.Mock).mockResolvedValue(mockUpdateResponse);
 
       const result = await filmsService.updateFilm(mockFilmId, updateFilmDto);
 

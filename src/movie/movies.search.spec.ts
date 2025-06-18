@@ -8,7 +8,7 @@ describe('MoviesService - Search Functionality', () => {
   let elasticsearchService: ElasticsearchService;
 
   // Mock data
-  const mockMovies: Movie[] = [
+  const mockMovies: Partial<Movie>[] = [
     {
       _id: '1',
       title: 'Inception',

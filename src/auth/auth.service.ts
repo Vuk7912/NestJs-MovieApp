@@ -13,9 +13,14 @@ export class AuthService {
     {
       id: 1,
       username: 'testuser',
-      password: '$2b$10$R1khpeHfqz8Xe4X9MzPmmuKmU4.pMzRt5cEqVu9EFbE.2ztZMNh3i', // hashed 'password123'
+      password: this.hashPassword('password123'), // pre-hash for testing
     },
   ];
+
+  private hashPassword(password: string): string {
+    const saltRounds = 10;
+    return bcrypt.hashSync(password, saltRounds);
+  }
 
   async login(username: string, password: string): Promise<{ access_token: string }> {
     const user = this.users.find(u => u.username === username);

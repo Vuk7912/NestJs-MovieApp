@@ -11,6 +11,6 @@
   },
   "devDependencies": {
     "@nestjs/testing": "^10.0.0",
-    "vitest": "^1.2.2"
+    "vitest": "^1.6.1"
   }
 }

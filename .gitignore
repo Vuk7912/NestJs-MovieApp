@@ -1,8 +1,8 @@
 node_modules/
 dist/
 .env
-__pycache__/
-coverage/
 *.log
-.vitest
 .DS_Store
+coverage/
+.vitest/
+.nyc_output/

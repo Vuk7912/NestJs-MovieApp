@@ -14,7 +14,7 @@ export class FilmsService {
           doc: updateFilmDto
         }
       });
-      return response.body;
+      return response;
     } catch (error) {
       throw new Error(`Failed to update film: ${error.message}`);
     }

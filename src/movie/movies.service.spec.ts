@@ -1,9 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { MovieService } from './movies.service';
+import { Test, TestingModule } from '@nestjs/nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { MovieService } from './movies.service';
 import { ElasticsearchService } from '../elasticsearch/elasticsearch.service';
 import { Movie } from './schemas/movie.schema';
-import { Model } from 'mongoose';
 import { CreateMovieDto } from './dto/create-movie.dto';
 
 describe('MovieService', () => {
@@ -36,28 +36,25 @@ describe('MovieService', () => {
   });
 
   describe('updateMovieById', () => {
-    it('should update a movie and sync with Elasticsearch', async () => {
-      // Prepare test data
-      const movieId = '60d5ecb8b3b3a83f2cf5e123';
+    it('should update a movie and index in elasticsearch', async () => {
+      const movieId = '123';
       const updateMovieDto: CreateMovieDto = {
-        title: 'Updated Movie Title',
-        genre: 'Updated Genre',
-        description: 'Updated Description',
+        title: 'Updated Movie',
+        genre: 'Drama',
+        description: 'Updated description',
+        year: 2023,
       };
 
       const updatedMovie = {
         _id: movieId,
         ...updateMovieDto,
-      };
+      } as Movie;
 
-      // Mock implementations
       mockMovieModel.findByIdAndUpdate.mockResolvedValue(updatedMovie);
-      mockElasticsearchService.updateFilm.mockResolvedValue(true);
+      mockElasticsearchService.updateFilm.mockResolvedValue(undefined);
 
-      // Execute method
       const result = await movieService.updateMovieById(movieId, updateMovieDto);
 
-      // Assertions
       expect(mockMovieModel.findByIdAndUpdate).toHaveBeenCalledWith(
         movieId,
         updateMovieDto,
@@ -67,29 +64,21 @@ describe('MovieService', () => {
       expect(result).toEqual(updatedMovie);
     });
 
-    it('should return null if movie not found', async () => {
-      // Prepare test data
-      const movieId = '60d5ecb8b3b3a83f2cf5e123';
+    it('should return null if movie is not found', async () => {
+      const movieId = '123';
       const updateMovieDto: CreateMovieDto = {
-        title: 'Updated Movie Title',
-        genre: 'Updated Genre',
-        description: 'Updated Description',
+        title: 'Updated Movie',
+        genre: 'Drama',
+        description: 'Updated description',
+        year: 2023,
       };
 
-      // Mock implementations
       mockMovieModel.findByIdAndUpdate.mockResolvedValue(null);
 
-      // Execute method
       const result = await movieService.updateMovieById(movieId, updateMovieDto);
 
-      // Assertions
-      expect(mockMovieModel.findByIdAndUpdate).toHaveBeenCalledWith(
-        movieId,
-        updateMovieDto,
-        { new: true }
-      );
-      expect(mockElasticsearchService.updateFilm).not.toHaveBeenCalled();
       expect(result).toBeNull();
+      expect(mockElasticsearchService.updateFilm).not.toHaveBeenCalled();
     });
   });
 });

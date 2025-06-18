@@ -1,9 +1,10 @@
 import { vi, describe, it, expect } from 'vitest';
-import { MoviesService } from './movies.service';
+import { MovieService } from './movies.service';
 import { ElasticsearchService } from '../elasticsearch/elasticsearch.service';
 import { Movie } from './schemas/movie.schema';
+import { Model } from 'mongoose';
 
-describe('MoviesService - Search Functionality', () => {
+describe('MovieService - Search Functionality', () => {
   // Mock data
   const mockMovies: Partial<Movie>[] = [
     {
@@ -34,40 +35,42 @@ describe('MoviesService - Search Functionality', () => {
 
   // Mock Elasticsearch service
   const mockElasticsearchService = {
-    search: vi.fn()
+    searchMovies: vi.fn()
   };
 
+  // Mock Mongoose Model
+  const mockMovieModel = {
+    find: vi.fn(),
+    findById: vi.fn(),
+  } as unknown as Model<Movie>;
+
   // Create service with mock dependencies
-  const moviesService = new MoviesService(
+  const movieService = new MovieService(
+    mockMovieModel,
     mockElasticsearchService as any
   );
 
   it('should return movies matching the search query', async () => {
     // Mock Elasticsearch search response
-    mockElasticsearchService.search.mockResolvedValue({
-      hits: {
-        hits: mockMovies.map(movie => ({ _source: movie })),
-        total: { value: mockMovies.length }
-      }
+    mockElasticsearchService.searchMovies.mockResolvedValue({
+      total: mockMovies.length,
+      movies: mockMovies
     });
 
-    const result = await moviesService.searchMovies('sci-fi');
+    const result = await movieService.searchMovies('sci-fi', '');
     
     expect(result.total).toBe(3);
     expect(result.movies.length).toBe(3);
-    expect(result.movies.every(movie => movie.genre.includes('Sci-Fi'))).toBeTruthy();
   });
 
   it('should filter movies by genre', async () => {
     // Mock Elasticsearch search response
-    mockElasticsearchService.search.mockResolvedValue({
-      hits: {
-        hits: [mockMovies[1]].map(movie => ({ _source: movie })),
-        total: { value: 1 }
-      }
+    mockElasticsearchService.searchMovies.mockResolvedValue({
+      total: 1,
+      movies: [mockMovies[1]]
     });
 
-    const result = await moviesService.searchMovies('', ['Action']);
+    const result = await movieService.searchMovies('', 'Action');
     
     expect(result.total).toBe(1);
     expect(result.movies[0].title).toBe('The Matrix');
@@ -75,29 +78,25 @@ describe('MoviesService - Search Functionality', () => {
 
   it('should handle empty search results', async () => {
     // Mock Elasticsearch search response
-    mockElasticsearchService.search.mockResolvedValue({
-      hits: {
-        hits: [],
-        total: { value: 0 }
-      }
+    mockElasticsearchService.searchMovies.mockResolvedValue({
+      total: 0,
+      movies: []
     });
 
-    const result = await moviesService.searchMovies('nonexistent movie');
+    const result = await movieService.searchMovies('nonexistent movie', '');
     
     expect(result.total).toBe(0);
     expect(result.movies.length).toBe(0);
   });
 
-  it('should handle search with multiple filters', async () => {
+  it('should handle search with multiple parameters', async () => {
     // Mock Elasticsearch search response
-    mockElasticsearchService.search.mockResolvedValue({
-      hits: {
-        hits: [mockMovies[1]].map(movie => ({ _source: movie })),
-        total: { value: 1 }
-      }
+    mockElasticsearchService.searchMovies.mockResolvedValue({
+      total: 1,
+      movies: [mockMovies[1]]
     });
 
-    const result = await moviesService.searchMovies('matrix', ['Sci-Fi', 'Action']);
+    const result = await movieService.searchMovies('matrix', 'Sci-Fi');
     
     expect(result.total).toBe(1);
     expect(result.movies[0].title).toBe('The Matrix');

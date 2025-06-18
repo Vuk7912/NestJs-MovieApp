@@ -1,28 +1,28 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { FilmsService } from './films.service';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-
-class MockElasticsearchService {
-  update = vi.fn();
-}
+import { expect } from 'vitest';
 
 describe('FilmsService', () => {
   let filmsService: FilmsService;
-  let elasticsearchService: MockElasticsearchService;
+  let elasticsearchService: ElasticsearchService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    const mockElasticsearchService = {
+      update: jest.fn()
+    };
+
+    const module = await Test.createTestingModule({
       providers: [
         FilmsService,
         {
           provide: ElasticsearchService,
-          useClass: MockElasticsearchService
+          useValue: mockElasticsearchService
         }
       ]
     }).compile();
 
-    filmsService = module.get<FilmsService>(FilmsService);
+    filmsService = module.get(FilmsService);
     elasticsearchService = module.get(ElasticsearchService);
   });
 
@@ -32,7 +32,7 @@ describe('FilmsService', () => {
       const updateFilmDto = { title: 'Updated Film Title', year: 2023 };
       const mockUpdateResponse = { body: { result: 'updated' } };
 
-      elasticsearchService.update.mockResolvedValue(mockUpdateResponse);
+      jest.spyOn(elasticsearchService, 'update').mockResolvedValue(mockUpdateResponse as any);
 
       const result = await filmsService.updateFilm(mockFilmId, updateFilmDto);
 
@@ -48,7 +48,7 @@ describe('FilmsService', () => {
       const mockFilmId = 'film123';
       const updateFilmDto = { title: 'Updated Film Title' };
 
-      elasticsearchService.update.mockRejectedValue(new Error('Update failed'));
+      jest.spyOn(elasticsearchService, 'update').mockRejectedValue(new Error('Update failed'));
 
       await expect(filmsService.updateFilm(mockFilmId, updateFilmDto)).rejects.toThrow('Failed to update film: Update failed');
     });
@@ -58,7 +58,7 @@ describe('FilmsService', () => {
       const updateFilmDto = { year: 2023 };
       const mockUpdateResponse = { body: { result: 'updated' } };
 
-      elasticsearchService.update.mockResolvedValue(mockUpdateResponse);
+      jest.spyOn(elasticsearchService, 'update').mockResolvedValue(mockUpdateResponse as any);
 
       const result = await filmsService.updateFilm(mockFilmId, updateFilmDto);
 

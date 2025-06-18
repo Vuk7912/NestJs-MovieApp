@@ -64,10 +64,16 @@
   "vitest": {
     "test": {
       "globals": true,
-      "include": ["src/**/*.spec.ts"],
+      "include": [
+        "src/**/*.spec.ts"
+      ],
       "coverage": {
         "provider": "v8",
-        "reporter": ["text", "json", "html"],
+        "reporter": [
+          "text",
+          "json",
+          "html"
+        ],
         "thresholds": {
           "lines": 70,
           "branches": 70,

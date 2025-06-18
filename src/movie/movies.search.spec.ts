@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { MoviesService } from './movies.service';
 import { ElasticsearchService } from '../elasticsearch/elasticsearch.service';
 import { Movie } from './schemas/movie.schema';
@@ -42,7 +43,7 @@ describe('MoviesService - Search Functionality', () => {
         {
           provide: ElasticsearchService,
           useValue: {
-            search: jest.fn(),
+            search: vi.fn(),
           },
         },
       ],
@@ -55,7 +56,7 @@ describe('MoviesService - Search Functionality', () => {
   describe('searchMovies', () => {
     it('should return movies matching the search query', async () => {
       // Mock Elasticsearch search response
-      jest.spyOn(elasticsearchService, 'search').mockResolvedValue({
+      vi.spyOn(elasticsearchService, 'search').mockResolvedValue({
         hits: {
           hits: mockMovies.map(movie => ({ _source: movie })),
           total: { value: mockMovies.length }
@@ -71,7 +72,7 @@ describe('MoviesService - Search Functionality', () => {
 
     it('should filter movies by genre', async () => {
       // Mock Elasticsearch search response
-      jest.spyOn(elasticsearchService, 'search').mockResolvedValue({
+      vi.spyOn(elasticsearchService, 'search').mockResolvedValue({
         hits: {
           hits: [mockMovies[1]].map(movie => ({ _source: movie })),
           total: { value: 1 }
@@ -86,7 +87,7 @@ describe('MoviesService - Search Functionality', () => {
 
     it('should handle empty search results', async () => {
       // Mock Elasticsearch search response
-      jest.spyOn(elasticsearchService, 'search').mockResolvedValue({
+      vi.spyOn(elasticsearchService, 'search').mockResolvedValue({
         hits: {
           hits: [],
           total: { value: 0 }
@@ -101,7 +102,7 @@ describe('MoviesService - Search Functionality', () => {
 
     it('should handle search with multiple filters', async () => {
       // Mock Elasticsearch search response
-      jest.spyOn(elasticsearchService, 'search').mockResolvedValue({
+      vi.spyOn(elasticsearchService, 'search').mockResolvedValue({
         hits: {
           hits: [mockMovies[1]].map(movie => ({ _source: movie })),
           total: { value: 1 }

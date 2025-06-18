@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { MovieService } from '../movie.service';
 import { expect, describe, it, beforeEach, vi } from 'vitest';
+import { NotFoundException } from '@nestjs/common';
 
 // Mock movie update data
 const mockMovieId = '123';
@@ -66,12 +67,12 @@ describe('MovieService - updateFilm', () => {
     });
   });
 
-  it('should throw an error if movie is not found', async () => {
-    vi.spyOn(elasticsearchService, 'get').mockRejectedValue(new Error('Movie not found'));
+  it('should throw a NotFoundException if movie is not found', async () => {
+    vi.spyOn(elasticsearchService, 'get').mockRejectedValue(new Error('index_not_found_exception'));
 
     await expect(
       movieService.updateFilm(mockMovieId, mockUpdateMovieDto)
-    ).rejects.toThrow('Movie not found');
+    ).rejects.toThrow(NotFoundException);
   });
 
   it('should handle partial updates', async () => {
@@ -97,10 +98,10 @@ describe('MovieService - updateFilm', () => {
   });
 
   it('should handle error during update', async () => {
-    vi.spyOn(elasticsearchService, 'update').mockRejectedValue(new Error('Update failed'));
+    vi.spyOn(elasticsearchService, 'update').mockRejectedValue(new Error('Unexpected error'));
 
     await expect(
       movieService.updateFilm(mockMovieId, mockUpdateMovieDto)
-    ).rejects.toThrow('Update failed');
+    ).rejects.toThrow('Unexpected error');
   });
 });

@@ -15,43 +15,51 @@ const mockUpdateMovieDto = {
 
 describe('MovieService - updateFilm', () => {
   let movieService: MovieService;
-  let elasticsearchService: ElasticsearchService;
+  let elasticsearchService: {
+    update: jest.Mock;
+    get: jest.Mock;
+  };
 
   beforeEach(async () => {
+    const mockElasticsearchService = {
+      update: vi.fn(),
+      get: vi.fn()
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MovieService,
         {
           provide: ElasticsearchService,
-          useValue: {
-            update: vi.fn(),
-            get: vi.fn().mockResolvedValue({
-              _source: {
-                id: mockMovieId,
-                title: 'Original Movie',
-                description: 'Original description',
-                year: 2022,
-                genres: ['Action']
-              }
-            })
-          }
+          useValue: mockElasticsearchService
         }
       ]
     }).compile();
 
     movieService = module.get<MovieService>(MovieService);
-    elasticsearchService = module.get<ElasticsearchService>(ElasticsearchService);
+    elasticsearchService = module.get(ElasticsearchService);
   });
 
   it('should successfully update a movie', async () => {
-    const mockElasticsearchResponse = {
+    const mockGetResponse = {
+      _source: {
+        id: mockMovieId,
+        title: 'Original Movie',
+        description: 'Original description',
+        year: 2022,
+        genres: ['Action']
+      }
+    };
+
+    const mockUpdateResponse = {
       _index: 'movies',
       _id: mockMovieId,
       _version: 2,
       result: 'updated'
     };
 
-    vi.spyOn(elasticsearchService, 'update').mockResolvedValue(mockElasticsearchResponse);
+    elasticsearchService.get.mockResolvedValue(mockGetResponse);
+    elasticsearchService.update.mockResolvedValue(mockUpdateResponse);
 
     const result = await movieService.updateFilm(mockMovieId, mockUpdateMovieDto);
 
@@ -68,7 +76,7 @@ describe('MovieService - updateFilm', () => {
   });
 
   it('should throw a NotFoundException if movie is not found', async () => {
-    vi.spyOn(elasticsearchService, 'get').mockRejectedValue(new Error('index_not_found_exception'));
+    elasticsearchService.get.mockRejectedValue(new Error('index_not_found_exception'));
 
     await expect(
       movieService.updateFilm(mockMovieId, mockUpdateMovieDto)
@@ -78,14 +86,25 @@ describe('MovieService - updateFilm', () => {
   it('should handle partial updates', async () => {
     const partialUpdateDto = { title: 'Partially Updated Title' };
 
-    const mockElasticsearchResponse = {
+    const mockGetResponse = {
+      _source: {
+        id: mockMovieId,
+        title: 'Original Movie',
+        description: 'Original description',
+        year: 2022,
+        genres: ['Action']
+      }
+    };
+
+    const mockUpdateResponse = {
       _index: 'movies',
       _id: mockMovieId,
       _version: 2,
       result: 'updated'
     };
 
-    vi.spyOn(elasticsearchService, 'update').mockResolvedValue(mockElasticsearchResponse);
+    elasticsearchService.get.mockResolvedValue(mockGetResponse);
+    elasticsearchService.update.mockResolvedValue(mockUpdateResponse);
 
     const result = await movieService.updateFilm(mockMovieId, partialUpdateDto);
 
@@ -98,7 +117,18 @@ describe('MovieService - updateFilm', () => {
   });
 
   it('should handle error during update', async () => {
-    vi.spyOn(elasticsearchService, 'update').mockRejectedValue(new Error('Unexpected error'));
+    const mockGetResponse = {
+      _source: {
+        id: mockMovieId,
+        title: 'Original Movie',
+        description: 'Original description',
+        year: 2022,
+        genres: ['Action']
+      }
+    };
+
+    elasticsearchService.get.mockResolvedValue(mockGetResponse);
+    elasticsearchService.update.mockRejectedValue(new Error('Unexpected error'));
 
     await expect(
       movieService.updateFilm(mockMovieId, mockUpdateMovieDto)

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
 
 interface UpdateMovieDto {
@@ -32,10 +32,10 @@ export class MovieService {
         ...updateMovieDto
       };
     } catch (error) {
-      if (error.message.includes('Movie not found')) {
-        throw new Error('Movie not found');
+      if (error.message.includes('index_not_found_exception')) {
+        throw new NotFoundException('Movie not found');
       }
-      throw new Error('Update failed');
+      throw error;
     }
   }
 }
